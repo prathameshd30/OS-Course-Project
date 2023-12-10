@@ -87,6 +87,13 @@ Functions used in Phase 1
     void TERMINATE(VM * vm) // Terminate jobs correctly
 Rest of the functions are just the instructions given in the instruction set.
 
+Interrupts involved in Phase 1
+
+    SI (Supervisory Interrupt)
+    - SI = 1 GD
+    - SI = 2 PD
+    - SI = 3 H  
+
 Compilation of Phase 1
 
     gcc -c VM.c
@@ -120,16 +127,33 @@ Functions used in Phase 2
     void START_EXECUTION(VM *vm); // Starts execution by setting IC to 0
     void EXECUTE_USER_PROGRAM(VM *vm); //Decides which action to take based on instructions in IR
     int ADDRESS_MAP(VM *vm, int VA); //Translates Virtual Address to Real Address
-    void MOS(VM *vm); // Supervisory interrupt handler
-    void READ(VM *vm);
-    void WRITE(VM *vm);
-    void LR(VM *vm);
-    void SR(VM *vm);
-    void CR(VM *vm);
-    void BT(VM *vm);
+    void MOS(VM *vm); // Interrupt handler
     void SIMULATION(VM *vm); // Simulates time taken by execution of instruction
-    void TERMINATE(VM *vm, int EM);
+    void TERMINATE(VM *vm, int EM); // Terminate job as necessary
 
+Interrupts involved in Phase 2
+
+    SI (Supervisory Interrupt)
+     SI = 1 GD
+     SI = 2 PD
+     SI = 3 H
+
+    TI (Timer Interrupt)
+     TI = 0 Time Limit Not Exceeded
+     TI = 1 TIme Limit Exceeded
+
+    PI (Program Interrupt)
+     PI = 1 Operation Error
+     PI = 2 Opcode Error
+     PI = 3 Page Fault
+
+**Page faults are again of 2 types - Valid Page Faults and Invalid Page Faults**
+
+Valid page faults take place whenever memory is to be loaded for the first time. Only GD and LR instructions can give rise to Valid Page Faults.
+
+Invalid page faults take place when memory is accessed for reading. All other instructions can give rise to Invalid Page Faults.
+
+There is a specific method to handle Valid Page Faults by allocation of frame and updating the page table, and rerunning the same instruction by decrementing the Instruction Counter.
 
 Compilation of Phase 2
 
@@ -144,3 +168,6 @@ Please select .exe or other formats as per your platform.
 2. TTL - Total Time Limit - Maximum number of instructions that can be executed by the current Job.
 3. TLL - Total Line Limit - Maximum number of lines that can be printed by the current Job.
 4. VM - Virtual Machine - The machine we will be running the OS on.
+5. SI - Supervisory/System Interrupt
+6. PI - Program Interrupt
+7. TI - Timer Interrupt
