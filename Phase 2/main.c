@@ -1,26 +1,29 @@
-#include "VM.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
+#include <string.h>
+#include "VM.h"
 
 #define LINE_SIZE 42
 
 char lineBuffer[LINE_SIZE];
 FILE *stateFile;
 
-void LOAD(VM *vm);
-void PTR_INIT(VM *vm);
-int ALLOCATE(VM *vm);
-void START_EXECUTION(VM *vm);
-void EXECUTE_USER_PROGRAM(VM *vm);
-int ADDRESS_MAP(VM *vm, int VA);
-void MOS(VM *vm);
+void LOAD(VM *vm); //Loads program into memory
+void PTR_INIT(VM *vm); //Initialises page table
+int ALLOCATE(VM *vm); // Gives unused random frame number
+void START_EXECUTION(VM *vm); // Starts execution by setting IC to 0
+void EXECUTE_USER_PROGRAM(VM *vm); //Decides which action to take based on instructions in IR
+int ADDRESS_MAP(VM *vm, int VA); //Translates Virtual Address to Real Address
+void MOS(VM *vm); // Supervisory interrupt handler
 void READ(VM *vm);
 void WRITE(VM *vm);
 void LR(VM *vm);
 void SR(VM *vm);
 void CR(VM *vm);
 void BT(VM *vm);
-void SIMULATION(VM *vm);
+void SIMULATION(VM *vm); // Simulates time taken by execution of instruction
 void TERMINATE(VM *vm, int EM);
 
 void LOAD(VM *vm)
@@ -211,7 +214,6 @@ int ADDRESS_MAP(VM *vm, int VA)
         return -1;
     }
     int realAddress = (vm->memcon->M[page][2] - '0') * 10 + (vm->memcon->M[page][3] - '0');
-    // printf("ADDRESS MAP RETURNS = %d\n",(realAddress * 10) + (VA % 10));
     return (realAddress * 10) + (VA % 10);
 }
 
