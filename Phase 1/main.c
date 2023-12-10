@@ -1,10 +1,12 @@
-#include "VM.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "VM.h"
 
-#define LINESIZE 42
-char lineBuffer[LINESIZE];
+#define LINESIZE 42 // Used to detect lines which are greater than 40 characters.
+char lineBuffer[LINESIZE]; //Used to get each line, when reading line by line.
 
-void LOAD(VM* vm)
+void LOAD(VM* vm) //Loads the programs into main memory.
 {
     INIT(vm);
     int currWordIndex = 0;
@@ -13,7 +15,7 @@ void LOAD(VM* vm)
     {
         if(!strnlen(lineBuffer,sizeof(lineBuffer))<1)
         {
-            lineBuffer[strnlen(lineBuffer,sizeof(lineBuffer))-1]=0;
+            lineBuffer[strnlen(lineBuffer,sizeof(lineBuffer))-1]=0; // Null the string correctly, get rid of newline at end.
         }
         if(strnlen(lineBuffer,sizeof(lineBuffer))>41)
         {
@@ -37,11 +39,6 @@ void LOAD(VM* vm)
         }
         else //Program Card NOT DATA CARDS
         {
-            if(strnlen(lineBuffer,LINESIZE)>41) // Account for null character
-            {
-                puts("Wrong Program Card Detected");
-                return;
-            }
             char j = 0;
             for (char i = 0; i < strnlen(lineBuffer,sizeof(lineBuffer)); ++i)
             {
@@ -60,7 +57,7 @@ void LOAD(VM* vm)
     return;
 }
 
-void READ(VM * vm)
+void READ(VM * vm) // Analog for GD instruction
 {
     fgets(lineBuffer,sizeof(lineBuffer),vm->input);
     
@@ -87,7 +84,7 @@ void READ(VM * vm)
     }
 }
 
-void WRITE(VM * vm)
+void WRITE(VM * vm)// Analog for PD instruction
 {
     int currBlockWordIndex = (vm->IR[2] - '0')*10;
     for(int i = currBlockWordIndex; i<currBlockWordIndex+10 ;++i)
@@ -104,14 +101,14 @@ void WRITE(VM * vm)
 }
 
 
-void TERMINATE(VM * vm)
+void TERMINATE(VM * vm) // Terminate jobs correctly/
 {
     fputc('\n',vm->output);
     fputc('\n',vm->output);
     return;
 }
 
-void MOS(VM * vm)
+void MOS(VM * vm) //Use the Supervisory interrupt to execute needed interrupt handler.
 {
     if(vm->SI == 1)
     {
@@ -129,7 +126,7 @@ void MOS(VM * vm)
 
 void LR(VM * vm)
 {
-    int wordIndex = (vm->IR[2] - '0')*10 + (vm->IR[3] - '0');
+    int wordIndex = (vm->IR[2] - '0')*10 + (vm->IR[3] - '0'); // Just used to convert character numericals into actual numbers.
     vm->R[0] = vm->M[wordIndex][0];
     vm->R[1] = vm->M[wordIndex][1];
     vm->R[2] = vm->M[wordIndex][2];
@@ -138,7 +135,7 @@ void LR(VM * vm)
 
 void SR(VM * vm)
 {
-    int wordIndex = (vm->IR[2] - '0')*10 + (vm->IR[3] - '0');
+    int wordIndex = (vm->IR[2] - '0')*10 + (vm->IR[3] - '0'); // Just used to convert character numericals into actual numbers.
     vm->M[wordIndex][0] = vm->R[0];
     vm->M[wordIndex][1] = vm->R[1];
     vm->M[wordIndex][2] = vm->R[2];
@@ -171,7 +168,7 @@ void BT(VM * vm)
 }
 
 
-void EXECUTE_USER_PROGRAM(VM * vm)
+void EXECUTE_USER_PROGRAM(VM * vm)//Decides which action to take based on Instruction Register
 {
     for (; vm->IC < 100 && vm->IR[0]!='H';)
     {
@@ -214,7 +211,7 @@ void EXECUTE_USER_PROGRAM(VM * vm)
     }
 }
 
-void MOS_START_EXECUTION(VM * vm)
+void MOS_START_EXECUTION(VM * vm)//Just sets IC to 0, to comply with SPECS
 {
     vm->IC = 0;
     EXECUTE_USER_PROGRAM(vm);
