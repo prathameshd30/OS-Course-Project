@@ -1,4 +1,4 @@
-*.exe
 .gitignore
+*.exe
 *.o
 .vscode/

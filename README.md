@@ -7,20 +7,21 @@ The project involves simulating some basics of Operating Systems, particularly t
 The project is split into 2 phases, Phase 1 and Phase 2.
 
 ## Basic Structure
-- Input programs, called jobs, are read from the input file, line by line, where each line simulates an input "card" like in some original computers.
+- Input programs, called jobs, are read from the input file, line by line, where each line simulates an input "card".
 - Output file contains the output of the programs as dictated by the simulated OS, simulating a line printer.
-- Instruction takes the form of - AA00, where AA can be any instruction from the instruction set (given further) and 00 can be any memory address from 00 to 99.
-- Each line in the input file denotes an input card. Each card can have a maximum of 40 characters.
+- Instruction takes the form of - AA00, where AA can be any instruction from the instruction set ([given further](#instruction-set)) and 00 can be any memory address from 00 to 99.
+- Each line in the input file denotes an input card.
+- Each card can have a maximum of 40 characters.
 
 ## Types of cards
 3 Types of cards are used for structuring job.
 
 1. Control cards
     - $AMJ  (Beginning of Job) - Starts with $AMJ, followed 4 digit JID [1] , followed by 4 digit TTL [2], followed by 4 digit TLL [3].
-    - $DTA  (Starts the data segment)
+    - $DTA  (Starts the data segment).
     - $END  (Signifies the end of the job) - Starts with $END, followed by 4 digit Job ID.
 
-2. Instruction Cards - Contain instructions to execute (Maximum 10 instructions in one card)
+2. Instruction Cards - Contain instructions to execute (Maximum 10 instructions in one card).
 
 3. Data Cards - Contain data on which the instructions can operate on.
 
@@ -61,91 +62,103 @@ Phase 1 contiguously reads program cards and data cards starting from the memory
 
 Phase 1 does not have any translation between logical address and physical address.
 
-Structure of the VM sufficient to implement Phase 1 is
+### Structure of the VM sufficient to implement Phase 1
+```c
+char M[100][4]; //Main memory
+char IR[4];//Instruction Register
+short IC;//Instruction Counter
+char R[4];//General Purpose Register
+char C;//Toggle Function
+char SI;//Supervisory interrupt
+FILE *input;//Input file (Cards)
+FILE *output;//Output file (Line printer)
+```
+### Functions used in Phase 1
+```c  
+void INIT(VM *vm) // Resets the VM
+void printMemory(VM *vm) //Prints memory for easy debugging.
+void FILEprintMemory(FILE *memoryFile, VM *vm) //Dumps memory contents into a file in a structured manner for easy debugging.
+VM *BOOT(FILE *input, FILE *output) // Returns a new instance of the Virtual Machine.
+void LOAD(VM* vm) //Loads the programs into main memory.
+void MOS_START_EXECUTION(VM * vm)//Just sets IC to 0, to comply with SPECS    void EXECUTE_USER_PROGRAM(VM * vm)//Decides which action to take based on Instruction Register
+void MOS(VM * vm) //Use the Supervisory interrupt to execute needed interrupt handler.
+void READ(VM * vm) // Analog for GD instruction
+void WRITE(VM * vm)// Analog for PD instruction
+void TERMINATE(VM * vm) // Terminate jobs correctly
+```
 
-    char M[100][4]; //Main memory
-    char IR[4];//Instruction Register
-    short IC;//Instruction Counter
-    char R[4];//General Purpose Register
-    char C;//Toggle Function
-    char SI;//Supervisory interrupt
-    FILE *input;//Input file (Cards)
-    FILE *output;//Output file (Line printer)
 
-Functions used in Phase 1
-    
-    void INIT(VM *vm) // Resets the VM
-    void printMemory(VM *vm) //Prints memory for easy debugging.
-    void FILEprintMemory(FILE *memoryFile, VM *vm) //Dumps memory contents into a file in a structured manner for easy debugging.
-    VM *BOOT(FILE *input, FILE *output) // Returns a new instance of the Virtual Machine.
-    void LOAD(VM* vm) //Loads the programs into main memory.
-    void MOS_START_EXECUTION(VM * vm)//Just sets IC to 0, to comply with SPECS
-    void EXECUTE_USER_PROGRAM(VM * vm)//Decides which action to take based on Instruction Register
-    void MOS(VM * vm) //Use the Supervisory interrupt to execute needed interrupt handler.
-    void READ(VM * vm) // Analog for GD instruction
-    void WRITE(VM * vm)// Analog for PD instruction
-    void TERMINATE(VM * vm) // Terminate jobs correctly
 Rest of the functions are just the instructions given in the instruction set.
 
-Interrupts involved in Phase 1
+### Interrupts involved in Phase 1
 
-    SI (Supervisory Interrupt)
-    - SI = 1 GD
-    - SI = 2 PD
-    - SI = 3 H  
+SI (Supervisory Interrupt)
+SI Value | Interpretation |
+--- | --- |
+1|GD|
+2|PD|
+3|H|
 
-Compilation of Phase 1
-
-    gcc -c VM.c
-    gcc -o phase1(.exe) main.c VM.o
-
+### Compilation of Phase 1
+```
+gcc -c VM.c
+gcc -o phase1(.exe) main.c VM.o
+```
 Please select .exe or other formats as per your platform.
 
 # Phase 2
 Phase 2 has 300 words of memory, each of 4 bytes, resulting in 1200 bytes of memory.
 
-It uses the concept of paging, in which, program and data are stored at random locations, these random locations are recorded in the Page Table, which are used as a reference when executing the job.
+It uses the concept of paging, in which, program and data are stored at  non-contiguous random locations, these random locations are recorded in the Page Table, which are used when executing the job.
 
-Main Structure of VM
+### Main Structure of VM
 
-    CPU* cpu;
-    MEMCON* memcon; //Memory Controller
-    PCB* pcb;
-    int execFlag; //Used to signify if VM is done executing
-    FILE* input;
-    FILE* output;
+```c
+CPU* cpu;
+MEMCON* memcon; //Memory Controller
+PCB* pcb;
+int execFlag; //Used to signify if VM is done executing
+FILE* input;
+FILE* output;
+```
 
 
-Functions used in Phase 2
+### Functions used in Phase 2
+```c
+void VM_INIT(VM* vm);//Resets the Virtual Machine
+VM* VM_BOOT(FILE* input, FILE* output);//Returns instance of Virtual Machine
+void printState(FILE* stateFile, VM* vm);//Prints the entire state of the virtual machine in a structured manner in a file
+void LOAD(VM *vm); //Loads program into memory
+void PTR_INIT(VM *vm); //Initialises page table
+int ALLOCATE(VM *vm); // Gives unused random frame number
+void START_EXECUTION(VM *vm); // Starts execution by setting IC to 0
+void EXECUTE_USER_PROGRAM(VM *vm); //Decides which action to take based on instructions in IR
+int ADDRESS_MAP(VM *vm, int VA); //Translates Virtual Address to Real Address
+void MOS(VM *vm); // Interrupt handler
+void SIMULATION(VM *vm); // Simulates time taken by execution of instruction
+void TERMINATE(VM *vm, int EM); // Terminate job as necessary
+```
+### Interrupts involved in Phase 2
 
-    void VM_INIT(VM* vm);//Resets the Virtual Machine
-    VM* VM_BOOT(FILE* input, FILE* output);//Returns instance of Virtual Machine
-    void printState(FILE* stateFile, VM* vm);//Prints the entire state of the virtual machine in a structured manner in a file
-    void LOAD(VM *vm); //Loads program into memory
-    void PTR_INIT(VM *vm); //Initialises page table
-    int ALLOCATE(VM *vm); // Gives unused random frame number
-    void START_EXECUTION(VM *vm); // Starts execution by setting IC to 0
-    void EXECUTE_USER_PROGRAM(VM *vm); //Decides which action to take based on instructions in IR
-    int ADDRESS_MAP(VM *vm, int VA); //Translates Virtual Address to Real Address
-    void MOS(VM *vm); // Interrupt handler
-    void SIMULATION(VM *vm); // Simulates time taken by execution of instruction
-    void TERMINATE(VM *vm, int EM); // Terminate job as necessary
+SI (Supervisory Interrupt)
+SI Value | Interpretation |
+--- | --- |
+1|GD|
+2|PD|
+3|H|
 
-Interrupts involved in Phase 2
+TI (Timer Interrupt)
+TI Value|Interpretation|
+---|---|
+0 | Time Limit Not Exceeded
+2 | TIme Limit Exceeded
 
-    SI (Supervisory Interrupt)
-     SI = 1 GD
-     SI = 2 PD
-     SI = 3 H
-
-    TI (Timer Interrupt)
-     TI = 0 Time Limit Not Exceeded
-     TI = 1 TIme Limit Exceeded
-
-    PI (Program Interrupt)
-     PI = 1 Operation Error
-     PI = 2 Opcode Error
-     PI = 3 Page Fault
+PI (Program Interrupt)
+PI Value|Interpretation|
+---|---|
+1 |Operation Error
+2 |Opcode Error
+3 |Page Fault
 
 **Page faults are again of 2 types - Valid Page Faults and Invalid Page Faults**
 
@@ -155,7 +168,20 @@ Invalid page faults take place when memory is accessed for reading. All other in
 
 There is a specific method to handle Valid Page Faults by allocation of frame and updating the page table, and rerunning the same instruction by decrementing the Instruction Counter.
 
-Compilation of Phase 2
+### Error Codes / Error Messages in Phase 2
+Error Message Codes | Error |
+--- | --- |
+0 | No Error |
+1 | Out Of Data |
+2 | Line Limit Exceeded |
+3 | Time Limit Exceeded |
+4 | Operation Code Error |
+5 | Operand Error |
+6 | Invalid Page Fault |
+7 | Time Limit Exceeded with Operation Code Error (3+4)|
+8 | Time Limit Exceeded with Operand Error (3+5)|
+
+### Compilation of Phase 2
 
     gcc -c VM.c
     gcc -o phase2.(exe) main.c VM.o
